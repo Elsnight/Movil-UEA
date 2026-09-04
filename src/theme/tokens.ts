@@ -92,6 +92,7 @@ export const color = {
   textSecondary: primitive.charcoal700,
   primary: primitive.orange400,
   primaryPressed: primitive.orange600,
+  primaryLight: primitive.orange50,
   success: primitive.green400,
   successLight: primitive.green50,
   warning: primitive.yellow400,
