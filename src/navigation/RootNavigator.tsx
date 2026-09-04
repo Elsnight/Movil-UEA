@@ -5,12 +5,7 @@ import { AuthStack } from './AuthStack';
 import { ConsumidorTabs } from './ConsumidorTabs';
 import { ComercianteTabs } from './ComercianteTabs';
 import { color } from '../theme/tokens';
-
-export type RootStackParamList = {
-  Auth: undefined;
-  Consumidor: undefined;
-  Comerciante: undefined;
-};
+import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

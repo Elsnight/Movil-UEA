@@ -4,12 +4,7 @@ import { color, typography } from '../theme/tokens';
 import { MisOfertasScreen } from '../screens/comerciante/MisOfertasScreen';
 import { PublicarOfertaScreen } from '../screens/comerciante/PublicarOfertaScreen';
 import { ValidarRetiroScreen } from '../screens/comerciante/ValidarRetiroScreen';
-
-export type ComercianteTabParamList = {
-  MisOfertas: undefined;
-  Publicar: undefined;
-  ValidarRetiro: undefined;
-};
+import type { ComercianteTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<ComercianteTabParamList>();
 

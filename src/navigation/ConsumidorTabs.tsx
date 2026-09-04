@@ -3,11 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { color, typography } from '../theme/tokens';
 import { ExplorarOfertasScreen } from '../screens/consumidor/ExplorarOfertasScreen';
 import { MisReservasScreen } from '../screens/consumidor/MisReservasScreen';
-
-export type ConsumidorTabParamList = {
-  Explorar: undefined;
-  MisReservas: undefined;
-};
+import type { ConsumidorTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<ConsumidorTabParamList>();
 
