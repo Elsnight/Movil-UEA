@@ -1,10 +1,12 @@
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import { color, spacing, typography } from '../../theme/tokens';
 import { useOfertas } from '../../hooks/useOfertas';
 import { OfferCard } from '../../components/OfferCard/OfferCard';
 import { ListState } from '../../components/ListState/ListState';
+import { useAuthStore } from '../../store/authStore';
 import type { Oferta } from '../../services/ofertasService';
 import type { ConsumidorStackParamList } from '../../navigation/types';
 
@@ -15,9 +17,20 @@ export function ExplorarOfertasScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background }}>
-      <Text style={[typography.heading, { color: color.textPrimary, padding: spacing.md }]}>
-        Ofertas cerca de ti
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingTop: spacing.md }}>
+        <Text style={[typography.heading, { color: color.textPrimary }]}>
+          Ofertas cerca de ti
+        </Text>
+        <TouchableOpacity
+          onPress={() => useAuthStore.getState().cerrarSesion()}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar sesión"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={{ minHeight: 44, justifyContent: 'center' }}
+        >
+          <Ionicons name="log-out-outline" size={24} color={color.textSecondary} />
+        </TouchableOpacity>
+      </View>
       <ListState
         status={isLoading ? 'loading' : isError ? 'error' : 'success'}
         data={ofertas}

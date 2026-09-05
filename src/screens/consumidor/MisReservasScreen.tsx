@@ -1,9 +1,10 @@
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { color, spacing, radius, typography } from '../../theme/tokens';
 import { ListState } from '../../components/ListState/ListState';
 import { useReservas } from '../../hooks/useReservas';
+import { useAuthStore } from '../../store/authStore';
 import type { Reserva } from '../../services/reservasService';
 
 const RESERVA_CONFIG: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; color: string; bgColor: string }> = {
@@ -20,10 +21,19 @@ export function MisReservasScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background }}>
-      <View style={{ paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.md, paddingBottom: spacing.sm }}>
+      <View style={{ paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.md, paddingBottom: spacing.sm, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={[typography.heading, { color: color.textPrimary }]}>
           Mis Reservas
         </Text>
+        <TouchableOpacity
+          onPress={() => useAuthStore.getState().cerrarSesion()}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar sesión"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={{ minHeight: 44, justifyContent: 'center' }}
+        >
+          <Ionicons name="log-out-outline" size={24} color={color.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       <ListState
