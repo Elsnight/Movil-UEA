@@ -1,13 +1,17 @@
 import { View, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { color, spacing, typography } from '../../theme/tokens';
 import { useOfertas } from '../../hooks/useOfertas';
 import { OfferCard } from '../../components/OfferCard/OfferCard';
 import { ListState } from '../../components/ListState/ListState';
 import type { Oferta } from '../../services/ofertasService';
+import type { ConsumidorStackParamList } from '../../navigation/types';
 
 export function ExplorarOfertasScreen() {
   const { data, isLoading, isError, refetch } = useOfertas();
   const ofertas = data?.data ?? [];
+  const navigation = useNavigation<NativeStackNavigationProp<ConsumidorStackParamList>>();
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background }}>
@@ -29,9 +33,7 @@ export function ExplorarOfertasScreen() {
               precioOferta={item.precioOferta}
               imagenUrl={item.imagenUrl}
               estado={item.estado}
-              onPress={() => {
-                // TODO: Navegar a DetalleOfertaScreen con item.id
-              }}
+              onPress={() => navigation.navigate('DetalleOferta', { ofertaId: item.id })}
             />
           </View>
         )}

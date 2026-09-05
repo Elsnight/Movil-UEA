@@ -2,7 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityIndicator, View } from 'react-native';
 import { useAuthStore } from '../store/authStore';
 import { AuthStack } from './AuthStack';
-import { ConsumidorTabs } from './ConsumidorTabs';
+import { ConsumidorStack } from './ConsumidorStack';
 import { ComercianteTabs } from './ComercianteTabs';
 import { color } from '../theme/tokens';
 import type { RootStackParamList } from './types';
@@ -33,7 +33,7 @@ export function RootNavigator() {
       {usuario.rol === 'COMERCIANTE' ? (
         <Stack.Screen name="Comerciante" component={ComercianteTabs} />
       ) : (
-        <Stack.Screen name="Consumidor" component={ConsumidorTabs} />
+        <Stack.Screen name="Consumidor" component={ConsumidorStack} />
       )}
     </Stack.Navigator>
   );
