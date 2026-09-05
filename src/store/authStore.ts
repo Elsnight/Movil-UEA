@@ -1,8 +1,14 @@
 import { create } from 'zustand';
-import { api, TOKEN_KEY } from '../services/api';
+import { TOKEN_KEY } from '../services/api';
 import * as SecureStore from 'expo-secure-store';
+import { authService } from '../services/authService';
 
-type Usuario = { id: string; email: string; nombre: string; rol: 'CONSUMIDOR' | 'COMERCIANTE' | 'ADMINISTRADOR' };
+export type Usuario = {
+  id: string;
+  email: string;
+  nombre: string;
+  rol: 'CONSUMIDOR' | 'COMERCIANTE' | 'ADMINISTRADOR';
+};
 
 type AuthStore = {
   usuario: Usuario | null;
@@ -35,8 +41,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
         set({ isLoading: false });
         return;
       }
-      const { data } = await api.get<Usuario>('/api/auth/perfil');
-      set({ token, usuario: data, isLoading: false });
+      const usuario = await authService.perfil() as Usuario;
+      set({ token, usuario, isLoading: false });
     } catch {
       await SecureStore.deleteItemAsync(TOKEN_KEY);
       set({ token: null, usuario: null, isLoading: false });
