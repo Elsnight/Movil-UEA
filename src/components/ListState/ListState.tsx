@@ -7,7 +7,7 @@ type ListStateProps<T> = {
   status: 'loading' | 'empty' | 'error' | 'success';
   data?: T[];
   onRetry?: () => void;
-  renderItem: (item: T) => ReactNode;
+  renderItem?: (item: T) => ReactNode;
   emptyMessage?: string;
   errorMessage?: string;
 };
@@ -96,7 +96,7 @@ export function ListState<T>({
     );
   }
 
-  if (status === 'success' && data) {
+  if (status === 'success' && Array.isArray(data) && renderItem) {
     return <>{data.map((item, index) => <View key={index}>{renderItem(item)}</View>)}</>;
   }
 

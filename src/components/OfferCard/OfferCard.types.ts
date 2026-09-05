@@ -5,7 +5,7 @@ export interface OfferCardProps {
   precioOferta: number;
   imagenUrl?: string;
   distanciaKm?: number;
-  estado: 'DISPONIBLE' | 'PAUSADA' | 'AGOTADA' | 'EXPIRADA';
+  estado: string;
   onPress: () => void;
   variant?: 'compact' | 'full';
   accessibilityLabel?: string;

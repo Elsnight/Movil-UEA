@@ -17,15 +17,21 @@ export type Reserva = {
   };
 };
 
-type RailwayEnvelope<T> = { success: boolean; data: T };
+function extraerLista(respuesta: unknown): Reserva[] {
+  if (Array.isArray(respuesta)) return respuesta;
+  if (respuesta && typeof respuesta === 'object' && 'data' in (respuesta as Record<string, unknown>) && Array.isArray((respuesta as Record<string, unknown>).data)) {
+    return (respuesta as Record<string, unknown>).data as Reserva[];
+  }
+  return [];
+}
 
 export const reservasService = {
   listar: async () => {
-    const res = await api.get<RailwayEnvelope<Reserva[]>>('/api/reservas/mias');
-    return res.data.data;
+    const res = await api.get<{ success: boolean; data: unknown }>('/api/reservas/mias');
+    return extraerLista(res.data.data);
   },
   crear: async (data: { ofertaId: string; cantidad: number }) => {
-    const res = await api.post<RailwayEnvelope<Reserva>>('/api/reservas', {
+    const res = await api.post<{ success: boolean; data: Reserva }>('/api/reservas', {
       oferta_id: data.ofertaId,
       cantidad: data.cantidad,
     });
