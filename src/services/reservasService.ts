@@ -6,7 +6,7 @@ export type Reserva = {
   ofertaId: string;
   cantidad: number;
   codigoRetiro: string;
-  estado: 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'RETIRADA' | 'VENCIDA';
+  estado: string;
   createdAt: string;
   oferta: {
     id: string;
@@ -17,16 +17,18 @@ export type Reserva = {
   };
 };
 
-type ValidarRetiroInput = { codigoRetiro: string };
-type ValidarRetiroResponse = { valido: boolean; reserva?: Reserva; mensaje: string };
+type RailwayEnvelope<T> = { success: boolean; data: T };
 
 export const reservasService = {
-  listar: () => api.get<Reserva[]>('/api/reservas').then((r) => r.data),
-  crear: (data: { ofertaId: string; cantidad: number }) =>
-    api.post<Reserva>('/api/reservas', data).then((r) => r.data),
-  cancelar: (id: string) => api.patch<Reserva>(`/api/reservas/${id}/cancelar`).then((r) => r.data),
-  validarRetiro: (data: ValidarRetiroInput) =>
-    api.post<ValidarRetiroResponse>('/api/retiros/validar', data).then((r) => r.data),
-  confirmarRetiro: (codigoRetiro: string) =>
-    api.post<Reserva>(`/api/retiros/${codigoRetiro}/confirmar`).then((r) => r.data),
+  listar: async () => {
+    const res = await api.get<RailwayEnvelope<Reserva[]>>('/api/reservas/mias');
+    return res.data.data;
+  },
+  crear: async (data: { ofertaId: string; cantidad: number }) => {
+    const res = await api.post<RailwayEnvelope<Reserva>>('/api/reservas', {
+      oferta_id: data.ofertaId,
+      cantidad: data.cantidad,
+    });
+    return res.data.data;
+  },
 };

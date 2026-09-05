@@ -10,7 +10,7 @@ import type { ConsumidorStackParamList } from '../../navigation/types';
 
 export function ExplorarOfertasScreen() {
   const { data, isLoading, isError, refetch } = useOfertas();
-  const ofertas = data?.data ?? [];
+  const ofertas = data ?? [];
   const navigation = useNavigation<NativeStackNavigationProp<ConsumidorStackParamList>>();
 
   return (

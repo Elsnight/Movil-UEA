@@ -11,32 +11,7 @@ export function useReservas() {
 export function useCrearReserva() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: reservasService.crear,
+    mutationFn: (data: { ofertaId: string; cantidad: number }) => reservasService.crear(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reservas'] }),
-  });
-}
-
-export function useCancelarReserva() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: reservasService.cancelar,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reservas'] }),
-  });
-}
-
-export function useValidarRetiro() {
-  return useMutation({
-    mutationFn: reservasService.validarRetiro,
-  });
-}
-
-export function useConfirmarRetiro() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: reservasService.confirmarRetiro,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reservas'] });
-      queryClient.invalidateQueries({ queryKey: ['ofertas'] });
-    },
   });
 }

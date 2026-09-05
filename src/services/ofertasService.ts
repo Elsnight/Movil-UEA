@@ -15,15 +15,19 @@ export type Oferta = {
   createdAt: string;
 };
 
-type PaginatedResponse<T> = { data: T[]; total: number; page: number; limit: number };
+type RailwayEnvelope<T> = { success: boolean; data: T };
 
 export const ofertasService = {
-  listar: (params?: { page?: number; limit?: number; latitud?: number; longitud?: number; radio?: number }) =>
-    api.get<PaginatedResponse<Oferta>>('/api/ofertas', { params }).then((r) => r.data),
-  obtenerPorId: (id: string) => api.get<Oferta>(`/api/ofertas/${id}`).then((r) => r.data),
-  crear: (data: Omit<Oferta, 'id' | 'estado' | 'createdAt' | 'comercio'>) =>
-    api.post<Oferta>('/api/ofertas', data).then((r) => r.data),
-  actualizar: (id: string, data: Partial<Oferta>) =>
-    api.patch<Oferta>(`/api/ofertas/${id}`, data).then((r) => r.data),
-  misOfertas: () => api.get<Oferta[]>('/api/ofertas/mias').then((r) => r.data),
+  listar: async (params?: Record<string, string | number | undefined>) => {
+    const res = await api.get<RailwayEnvelope<Oferta[]>>('/api/ofertas', { params });
+    return res.data.data;
+  },
+  obtenerPorId: async (id: string) => {
+    const res = await api.get<RailwayEnvelope<Oferta>>(`/api/ofertas/${id}`);
+    return res.data.data;
+  },
+  crear: async (data: Record<string, unknown>) => {
+    const res = await api.post<RailwayEnvelope<Oferta>>('/api/ofertas', data);
+    return res.data.data;
+  },
 };
