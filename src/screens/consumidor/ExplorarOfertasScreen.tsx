@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { color, spacing, typography } from '../../theme/tokens';
@@ -14,10 +15,11 @@ export function ExplorarOfertasScreen() {
   const { data, isLoading, isError, refetch } = useOfertas();
   const ofertas = data ?? [];
   const navigation = useNavigation<NativeStackNavigationProp<ConsumidorStackParamList>>();
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingTop: spacing.md }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingTop: insets.top + spacing.sm }}>
         <Text style={[typography.heading, { color: color.textPrimary }]}>
           Ofertas cerca de ti
         </Text>
