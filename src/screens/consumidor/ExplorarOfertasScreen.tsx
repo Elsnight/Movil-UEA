@@ -7,12 +7,13 @@ import { color, spacing, typography } from '../../theme/tokens';
 import { useOfertas } from '../../hooks/useOfertas';
 import { OfferCard } from '../../components/OfferCard/OfferCard';
 import { ListState } from '../../components/ListState/ListState';
+import { OfflineBanner } from '../../components/OfflineBanner/OfflineBanner';
 import { useAuthStore } from '../../store/authStore';
 import type { Oferta } from '../../services/ofertasService';
 import type { ConsumidorStackParamList } from '../../navigation/types';
 
 export function ExplorarOfertasScreen() {
-  const { data, isLoading, isError, refetch } = useOfertas();
+  const { data, isLoading, isError, refetch, isFromCache, cacheAgeMinutos } = useOfertas();
   const ofertas = data ?? [];
   const navigation = useNavigation<NativeStackNavigationProp<ConsumidorStackParamList>>();
   const insets = useSafeAreaInsets();
@@ -33,6 +34,7 @@ export function ExplorarOfertasScreen() {
           <Ionicons name="log-out-outline" size={24} color={color.textSecondary} />
         </TouchableOpacity>
       </View>
+      {isFromCache && cacheAgeMinutos !== null && <OfflineBanner minutos={cacheAgeMinutos} />}
       <ListState
         status={isLoading ? 'loading' : isError ? 'error' : 'success'}
         data={ofertas}
