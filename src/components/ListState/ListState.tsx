@@ -1,5 +1,12 @@
 import { ReactNode } from 'react';
-import { View, Text, ActivityIndicator, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { color, spacing, typography } from '../../theme/tokens';
 
@@ -8,6 +15,7 @@ type ListStateProps<T> = {
   data?: T[];
   onRetry?: () => void;
   renderItem?: (item: T) => ReactNode;
+  keyExtractor?: (item: T, index: number) => string;
   emptyMessage?: string;
   errorMessage?: string;
 };
@@ -17,18 +25,26 @@ export function ListState<T>({
   data,
   onRetry,
   renderItem,
+  keyExtractor,
   emptyMessage = 'No hay resultados disponibles.',
   errorMessage = 'Ocurrió un error al cargar los datos.',
 }: ListStateProps<T>) {
   if (status === 'loading') {
     return (
       <View
-        style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md }}
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: spacing.md,
+        }}
         accessibilityRole="text"
         accessibilityLabel="Cargando datos"
       >
         <ActivityIndicator size="large" color={color.primary} />
-        <Text style={[typography.body, { color: color.textSecondary }]}>Cargando…</Text>
+        <Text style={[typography.body, { color: color.textSecondary }]}>
+          Cargando…
+        </Text>
       </View>
     );
   }
@@ -47,7 +63,12 @@ export function ListState<T>({
         accessibilityLabel="Error al cargar datos"
       >
         <Ionicons name="alert-circle-outline" size={48} color={color.danger} />
-        <Text style={[typography.body, { color: color.textSecondary, textAlign: 'center' }]}>
+        <Text
+          style={[
+            typography.body,
+            { color: color.textSecondary, textAlign: 'center' },
+          ]}
+        >
           {errorMessage}
         </Text>
         {onRetry && (
@@ -66,7 +87,12 @@ export function ListState<T>({
               justifyContent: 'center',
             })}
           >
-            <Text style={[typography.body, { color: color.surface, fontWeight: '600' }]}>
+            <Text
+              style={[
+                typography.body,
+                { color: color.surface, fontWeight: '600' },
+              ]}
+            >
               Reintentar
             </Text>
           </Pressable>
@@ -75,7 +101,10 @@ export function ListState<T>({
     );
   }
 
-  if (status === 'empty' || (status === 'success' && data && data.length === 0)) {
+  if (
+    status === 'empty' ||
+    (status === 'success' && data && data.length === 0)
+  ) {
     return (
       <View
         style={{
@@ -89,7 +118,12 @@ export function ListState<T>({
         accessibilityLabel={emptyMessage}
       >
         <Ionicons name="basket-outline" size={48} color={color.border} />
-        <Text style={[typography.body, { color: color.textSecondary, textAlign: 'center' }]}>
+        <Text
+          style={[
+            typography.body,
+            { color: color.textSecondary, textAlign: 'center' },
+          ]}
+        >
           {emptyMessage}
         </Text>
       </View>
@@ -97,8 +131,21 @@ export function ListState<T>({
   }
 
   if (status === 'success' && Array.isArray(data) && renderItem) {
-    return <>{data.map((item, index) => <View key={index}>{renderItem(item)}</View>)}</>;
+    return (
+      <FlatList
+        data={data}
+        keyExtractor={keyExtractor ?? ((_item, index) => String(index))}
+        renderItem={({ item }) => <>{renderItem(item)}</>}
+        style={styles.list}
+      />
+    );
   }
 
   return null;
 }
+
+const styles = StyleSheet.create({
+  list: {
+    flex: 1,
+  },
+});

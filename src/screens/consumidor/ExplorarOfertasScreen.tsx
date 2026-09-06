@@ -63,6 +63,7 @@ export function ExplorarOfertasScreen() {
       <ListState
         status={isLoading ? 'loading' : isError ? 'error' : 'success'}
         data={ofertas}
+        keyExtractor={(item) => item.id}
         onRetry={refetch}
         emptyMessage="No hay ofertas activas cerca de tu ubicación ahora mismo."
         errorMessage={errorMessage}
