@@ -1,6 +1,7 @@
 import NetInfo from '@react-native-community/netinfo';
-import { api } from './api';
+import { favoritosService } from './favoritosService';
 import { pendingRepository } from '../db/pendingRepository';
+import { favoritosRepository } from '../db/favoritosRepository';
 import { useFavoritosStore } from '../store/favoritosStore';
 import type { PendingOperation } from '../db/schema';
 
@@ -11,72 +12,114 @@ function esperarBackoff(intentos: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-type ManejadorOperacion = (op: PendingOperation) => Promise<boolean>;
+type FavoritoPayload = { comercio_id: string };
+type ManejadorOperacion = (op: PendingOperation) => Promise<void>;
+
+function obtenerPayloadFavorito(op: PendingOperation): FavoritoPayload {
+  const payload = JSON.parse(op.payload) as Partial<FavoritoPayload>;
+  if (!payload.comercio_id)
+    throw new Error('Operación de favorito sin comercio_id');
+  return { comercio_id: payload.comercio_id };
+}
 
 const manejadores: Record<string, ManejadorOperacion> = {
   agregar_favorito: async (op) => {
-    const payload = JSON.parse(op.payload);
-    await api.post(
-      '/api/favoritos',
-      { oferta_id: payload.oferta_id },
-      { headers: { 'Idempotency-Key': op.id } },
-    );
-    useFavoritosStore.getState().cargar([payload.oferta_id]);
-    return true;
+    const payload = obtenerPayloadFavorito(op);
+    await favoritosService.marcar(payload.comercio_id, op.id);
+    await favoritosRepository.agregar(payload.comercio_id);
+    useFavoritosStore.getState().agregar(payload.comercio_id);
+    useFavoritosStore.getState().limpiarFallo(payload.comercio_id);
   },
   eliminar_favorito: async (op) => {
-    const payload = JSON.parse(op.payload);
-    await api.delete(`/api/favoritos/${payload.oferta_id}`, {
-      headers: { 'Idempotency-Key': op.id },
-    });
-    useFavoritosStore.getState().eliminar(payload.oferta_id);
-    return true;
+    const payload = obtenerPayloadFavorito(op);
+    await favoritosService.desmarcar(payload.comercio_id, op.id);
+    await favoritosRepository.eliminar(payload.comercio_id);
+    useFavoritosStore.getState().eliminar(payload.comercio_id);
+    useFavoritosStore.getState().limpiarFallo(payload.comercio_id);
   },
 };
 
-async function procesarOperacion(op: PendingOperation): Promise<void> {
+type ResultadoOperacion = 'confirmada' | 'reintentar' | 'fallida';
+
+async function procesarOperacion(
+  op: PendingOperation,
+): Promise<ResultadoOperacion> {
   const manejador = manejadores[op.tipo_operacion];
   if (!manejador) {
     await pendingRepository.marcarFallido(op.id);
-    return;
+    return 'fallida';
   }
 
   await pendingRepository.marcarEnviando(op.id);
 
   try {
-    const exito = await manejador(op);
-    if (exito) {
-      await pendingRepository.eliminar(op.id);
-    }
+    await manejador(op);
+    await pendingRepository.eliminar(op.id);
+    return 'confirmada';
   } catch (error: unknown) {
-    const status = (error as { response?: { status?: number } })?.response?.status;
+    const status = (error as { response?: { status?: number } })?.response
+      ?.status;
+    const estadoDeseadoYaExiste =
+      (op.tipo_operacion === 'agregar_favorito' && status === 409) ||
+      (op.tipo_operacion === 'eliminar_favorito' && status === 404);
 
-    if (status === 409) {
+    if (estadoDeseadoYaExiste) {
       await pendingRepository.eliminar(op.id);
-      return;
+      return 'confirmada';
     }
 
-    if (status && status >= 400 && status < 500 && status !== 409) {
+    if (status && status >= 400 && status < 500) {
       await pendingRepository.marcarFallido(op.id);
-      return;
+      if (op.entidad === 'favorito') {
+        useFavoritosStore
+          .getState()
+          .marcarFallido(obtenerPayloadFavorito(op).comercio_id);
+      }
+      return 'fallida';
     }
 
+    const intentos = op.intentos + 1;
     await pendingRepository.incrementarIntentos(op.id);
-    const opActualizada = (await pendingRepository.obtenerPendientes()).find(
-      (p) => p.id === op.id,
-    );
-    if (opActualizada && opActualizada.intentos >= MAX_INTENTOS) {
+    if (intentos >= MAX_INTENTOS) {
       await pendingRepository.marcarFallido(op.id);
+      if (op.entidad === 'favorito') {
+        useFavoritosStore
+          .getState()
+          .marcarFallido(obtenerPayloadFavorito(op).comercio_id);
+      }
+      return 'fallida';
     }
+    return 'reintentar';
   }
 }
 
-export async function procesarCola(): Promise<void> {
-  const pendientes = await pendingRepository.obtenerPendientes();
+let procesamiento: Promise<void> | null = null;
 
-  for (const op of pendientes) {
-    await procesarOperacion(op);
-    await esperarBackoff(op.intentos);
+export async function procesarCola(): Promise<void> {
+  if (procesamiento) return procesamiento;
+
+  procesamiento = (async () => {
+    const pendientes = await pendingRepository.obtenerPendientes();
+
+    for (const pendiente of pendientes) {
+      const op = { ...pendiente };
+      let resultado = await procesarOperacion(op);
+
+      while (resultado === 'reintentar') {
+        await esperarBackoff(op.intentos + 1);
+        const netState = await NetInfo.fetch();
+        if (!netState.isConnected || netState.isInternetReachable === false)
+          break;
+        op.intentos += 1;
+        resultado = await procesarOperacion(op);
+      }
+    }
+  })();
+
+  try {
+    await procesamiento;
+  } finally {
+    procesamiento = null;
   }
 }
 
@@ -87,7 +130,7 @@ export function iniciarSyncAutomatico(): void {
 
   desuscribirNetInfo = NetInfo.addEventListener((estado) => {
     if (estado.isConnected) {
-      procesarCola();
+      void procesarCola();
     }
   });
 }

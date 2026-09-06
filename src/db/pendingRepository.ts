@@ -2,7 +2,9 @@ import { getDb } from './database';
 import type { PendingOperation } from './schema';
 
 export const pendingRepository = {
-  insertar: async (op: Omit<PendingOperation, 'estado' | 'intentos' | 'ultimo_intento_en'>): Promise<void> => {
+  insertar: async (
+    op: Omit<PendingOperation, 'estado' | 'intentos' | 'ultimo_intento_en'>,
+  ): Promise<void> => {
     const db = await getDb();
     await db.runAsync(
       `INSERT INTO pending_operations (id, tipo_operacion, entidad, payload, estado, intentos, creado_en)
@@ -18,7 +20,7 @@ export const pendingRepository = {
     const db = await getDb();
     const rows = await db.getAllAsync<PendingOperation>(
       `SELECT * FROM pending_operations
-       WHERE estado IN ('pendiente', 'fallido') AND intentos < 5
+       WHERE estado IN ('pendiente', 'enviando') AND intentos < 5
        ORDER BY creado_en ASC`,
     );
     return rows;
@@ -40,7 +42,9 @@ export const pendingRepository = {
   incrementarIntentos: async (id: string): Promise<void> => {
     const db = await getDb();
     await db.runAsync(
-      `UPDATE pending_operations SET intentos = intentos + 1, ultimo_intento_en = datetime('now') WHERE id = ?`,
+      `UPDATE pending_operations
+       SET estado = 'pendiente', intentos = intentos + 1, ultimo_intento_en = datetime('now')
+       WHERE id = ?`,
       id,
     );
   },
@@ -48,7 +52,9 @@ export const pendingRepository = {
   marcarFallido: async (id: string): Promise<void> => {
     const db = await getDb();
     await db.runAsync(
-      `UPDATE pending_operations SET estado = 'fallido', ultimo_intento_en = datetime('now') WHERE id = ?`,
+      `UPDATE pending_operations
+       SET estado = 'fallido', intentos = 5, ultimo_intento_en = datetime('now')
+       WHERE id = ?`,
       id,
     );
   },
@@ -59,5 +65,14 @@ export const pendingRepository = {
       `SELECT COUNT(*) as count FROM pending_operations WHERE estado = 'fallido'`,
     );
     return row?.count ?? 0;
+  },
+
+  obtenerFallidas: async (): Promise<PendingOperation[]> => {
+    const db = await getDb();
+    return db.getAllAsync<PendingOperation>(
+      `SELECT * FROM pending_operations
+       WHERE estado = 'fallido'
+       ORDER BY creado_en ASC`,
+    );
   },
 };

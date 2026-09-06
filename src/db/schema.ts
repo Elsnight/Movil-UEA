@@ -32,7 +32,10 @@ export type PendingOperation = {
   ultimo_intento_en: string | null;
 };
 
-export function mapearOfertaACache(oferta: Oferta, sucursalId?: string): OfertaCacheada {
+export function mapearOfertaACache(
+  oferta: Oferta,
+  sucursalId?: string,
+): OfertaCacheada {
   return {
     oferta_id: oferta.id,
     titulo_publico: oferta.titulo,
@@ -86,6 +89,11 @@ CREATE TABLE IF NOT EXISTS pending_operations (
   intentos INTEGER NOT NULL DEFAULT 0,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   ultimo_intento_en TEXT
+);
+
+CREATE TABLE IF NOT EXISTS favoritos_cache (
+  comercio_id TEXT PRIMARY KEY,
+  synced_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_pending_operations_estado ON pending_operations(estado);

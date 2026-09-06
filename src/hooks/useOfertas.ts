@@ -4,7 +4,13 @@ import { ofertasService, type Oferta } from '../services/ofertasService';
 import { ofertasRepository } from '../db/ofertasRepository';
 import type { OfertaCacheada } from '../db/schema';
 
-type UseOfertasParams = { page?: number; limit?: number; latitud?: number; longitud?: number; radio?: number };
+type UseOfertasParams = {
+  page?: number;
+  limit?: number;
+  latitud?: number;
+  longitud?: number;
+  radio?: number;
+};
 
 type UseOfertasResult = {
   data: Oferta[] | undefined;
@@ -35,7 +41,9 @@ export function useOfertas(params?: UseOfertasParams): UseOfertasResult {
 
       if (netState.isConnected && netState.isInternetReachable !== false) {
         try {
-          const ofertas = await ofertasService.listar(params as Record<string, string | number | undefined>);
+          const ofertas = await ofertasService.listar(
+            params as Record<string, string | number | undefined>,
+          );
           await ofertasRepository.guardarOfertas(ofertas);
           return { ofertas, isFromCache: false, cacheAgeMinutos: null };
         } catch (error) {
@@ -60,9 +68,10 @@ export function useOfertas(params?: UseOfertasParams): UseOfertasResult {
     refetch: () => query.refetch(),
     isFromCache: query.data?.isFromCache ?? false,
     cacheAgeMinutos: query.data?.cacheAgeMinutos ?? null,
-    errorMessage: query.error instanceof Error && query.error.message === ERROR_SIN_CONEXION
-      ? ERROR_SIN_CONEXION
-      : ERROR_CARGA,
+    errorMessage:
+      query.error instanceof Error && query.error.message === ERROR_SIN_CONEXION
+        ? ERROR_SIN_CONEXION
+        : ERROR_CARGA,
   };
 }
 

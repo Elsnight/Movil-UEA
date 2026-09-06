@@ -37,6 +37,7 @@ export async function reiniciarDb(): Promise<void> {
   await database.withTransactionAsync(async () => {
     await database.execAsync(`
       DROP TABLE IF EXISTS pending_operations;
+      DROP TABLE IF EXISTS favoritos_cache;
       DROP TABLE IF EXISTS oferta_cache;
       ${SCHEMA_SQL}
     `);

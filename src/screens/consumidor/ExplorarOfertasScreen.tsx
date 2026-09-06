@@ -5,6 +5,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { color, spacing, typography } from '../../theme/tokens';
 import { useOfertas } from '../../hooks/useOfertas';
+import { useFavoritos } from '../../hooks/useFavoritos';
 import { OfferCard } from '../../components/OfferCard/OfferCard';
 import { ListState } from '../../components/ListState/ListState';
 import { OfflineBanner } from '../../components/OfflineBanner/OfflineBanner';
@@ -22,13 +23,23 @@ export function ExplorarOfertasScreen() {
     cacheAgeMinutos,
     errorMessage,
   } = useOfertas();
+  const { favoritos, fallidos, alternarFavorito } = useFavoritos();
   const ofertas = data ?? [];
-  const navigation = useNavigation<NativeStackNavigationProp<ConsumidorStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<ConsumidorStackParamList>>();
   const insets = useSafeAreaInsets();
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingTop: insets.top + spacing.sm }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: spacing.md,
+          paddingTop: insets.top + spacing.sm,
+        }}
+      >
         <Text style={[typography.heading, { color: color.textPrimary }]}>
           Ofertas cerca de ti
         </Text>
@@ -39,10 +50,16 @@ export function ExplorarOfertasScreen() {
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           style={{ minHeight: 44, justifyContent: 'center' }}
         >
-          <Ionicons name="log-out-outline" size={24} color={color.textSecondary} />
+          <Ionicons
+            name="log-out-outline"
+            size={24}
+            color={color.textSecondary}
+          />
         </TouchableOpacity>
       </View>
-      {isFromCache && cacheAgeMinutos !== null && <OfflineBanner minutos={cacheAgeMinutos} />}
+      {isFromCache && cacheAgeMinutos !== null && (
+        <OfflineBanner minutos={cacheAgeMinutos} />
+      )}
       <ListState
         status={isLoading ? 'loading' : isError ? 'error' : 'success'}
         data={ofertas}
@@ -50,7 +67,9 @@ export function ExplorarOfertasScreen() {
         emptyMessage="No hay ofertas activas cerca de tu ubicación ahora mismo."
         errorMessage={errorMessage}
         renderItem={(item: Oferta) => (
-          <View style={{ paddingHorizontal: spacing.md, paddingBottom: spacing.md }}>
+          <View
+            style={{ paddingHorizontal: spacing.md, paddingBottom: spacing.md }}
+          >
             <OfferCard
               titulo={item.titulo}
               comercioNombre={item.comercio.nombre}
@@ -58,7 +77,12 @@ export function ExplorarOfertasScreen() {
               precioOferta={item.precioOferta}
               imagenUrl={item.imagenUrl}
               estado={item.estado}
-              onPress={() => navigation.navigate('DetalleOferta', { ofertaId: item.id })}
+              isFavorite={!!favoritos[item.comercio.id]}
+              favoriteSyncFailed={!!fallidos[item.comercio.id]}
+              onToggleFavorite={() => void alternarFavorito(item.comercio.id)}
+              onPress={() =>
+                navigation.navigate('DetalleOferta', { ofertaId: item.id })
+              }
             />
           </View>
         )}
