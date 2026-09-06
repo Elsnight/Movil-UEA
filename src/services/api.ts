@@ -2,6 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
 const TOKEN_KEY = 'accessToken';
+const REFRESH_TOKEN_KEY = 'refreshToken';
 
 const api = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000',
@@ -27,4 +28,4 @@ api.interceptors.response.use(
   },
 );
 
-export { api, TOKEN_KEY };
+export { api, TOKEN_KEY, REFRESH_TOKEN_KEY };

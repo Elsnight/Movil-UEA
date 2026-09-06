@@ -65,6 +65,7 @@ export function RegistroScreen({ navigation }: Props) {
       const res = await authService.registro(data);
       await setSesion(
         res.token,
+        res.refreshToken,
         res.usuario as {
           id: string;
           email: string;

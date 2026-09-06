@@ -22,7 +22,7 @@ export const authService = {
       contrasena: data.password,
     });
     const d = res.data.data;
-    return { token: d.accessToken, usuario: mapUsuario(d.usuario) };
+    return { token: d.accessToken, refreshToken: d.refreshToken, usuario: mapUsuario(d.usuario) };
   },
 
   registro: async (data: RegistroInput) => {
@@ -34,6 +34,6 @@ export const authService = {
       rol_nombre: data.rol,
     });
     const d = res.data.data;
-    return { token: d.accessToken, usuario: mapUsuario(d.usuario) };
+    return { token: d.accessToken, refreshToken: d.refreshToken, usuario: mapUsuario(d.usuario) };
   },
 };

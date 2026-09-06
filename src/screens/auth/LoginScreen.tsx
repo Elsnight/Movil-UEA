@@ -49,7 +49,16 @@ export function LoginScreen({ navigation }: Props) {
     setError('');
     try {
       const res = await authService.login(data);
-      await setSesion(res.token, res.usuario as { id: string; email: string; nombre: string; rol: 'CONSUMIDOR' | 'COMERCIANTE' | 'ADMINISTRADOR' });
+      await setSesion(
+        res.token,
+        res.refreshToken,
+        res.usuario as {
+          id: string;
+          email: string;
+          nombre: string;
+          rol: 'CONSUMIDOR' | 'COMERCIANTE' | 'ADMINISTRADOR';
+        },
+      );
     } catch (e: unknown) {
       const msg =
         (e as { response?: { data?: { mensaje?: string } } })?.response?.data
