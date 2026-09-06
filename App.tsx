@@ -5,6 +5,7 @@ import { ThemeProvider } from './src/theme/ThemeProvider';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/store/authStore';
 import { iniciarBD } from './src/db/database';
+import { iniciarSyncAutomatico } from './src/services/syncService';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,6 +21,7 @@ function AppContent() {
 
   useEffect(() => {
     iniciarBD();
+    iniciarSyncAutomatico();
     cargarSesion();
   }, []);
 
