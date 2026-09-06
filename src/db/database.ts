@@ -10,6 +10,8 @@ export async function getDb(): Promise<SQLiteDatabase> {
   return db;
 }
 
+export const iniciarBD = getDb;
+
 export async function cerrarDb(): Promise<void> {
   if (db) {
     await db.closeAsync();

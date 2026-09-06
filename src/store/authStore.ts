@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { TOKEN_KEY, REFRESH_TOKEN_KEY } from '../services/api';
 import * as SecureStore from 'expo-secure-store';
+import { reiniciarDb } from '../db/database';
 
 const USUARIO_KEY = 'usuario';
 
@@ -38,6 +39,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
     await SecureStore.deleteItemAsync(USUARIO_KEY);
+    await reiniciarDb();
     set({ token: null, refreshToken: null, usuario: null, isLoading: false });
   },
 
