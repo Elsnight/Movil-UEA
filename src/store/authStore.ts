@@ -36,11 +36,18 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   cerrarSesion: async () => {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
-    await SecureStore.deleteItemAsync(USUARIO_KEY);
-    await reiniciarDb();
+    const resultados = await Promise.allSettled([
+      SecureStore.deleteItemAsync(TOKEN_KEY),
+      SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY),
+      SecureStore.deleteItemAsync(USUARIO_KEY),
+      reiniciarDb(),
+    ]);
     set({ token: null, refreshToken: null, usuario: null, isLoading: false });
+
+    const errores = resultados.filter((resultado) => resultado.status === 'rejected');
+    if (errores.length > 0) {
+      console.warn('No se pudieron borrar todos los datos locales al cerrar sesión.', errores);
+    }
   },
 
   cargarSesion: async () => {

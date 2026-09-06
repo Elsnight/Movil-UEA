@@ -13,7 +13,15 @@ import type { Oferta } from '../../services/ofertasService';
 import type { ConsumidorStackParamList } from '../../navigation/types';
 
 export function ExplorarOfertasScreen() {
-  const { data, isLoading, isError, refetch, isFromCache, cacheAgeMinutos } = useOfertas();
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    isFromCache,
+    cacheAgeMinutos,
+    errorMessage,
+  } = useOfertas();
   const ofertas = data ?? [];
   const navigation = useNavigation<NativeStackNavigationProp<ConsumidorStackParamList>>();
   const insets = useSafeAreaInsets();
@@ -40,7 +48,7 @@ export function ExplorarOfertasScreen() {
         data={ofertas}
         onRetry={refetch}
         emptyMessage="No hay ofertas activas cerca de tu ubicación ahora mismo."
-        errorMessage="No pudimos cargar las ofertas. Revisa tu conexión."
+        errorMessage={errorMessage}
         renderItem={(item: Oferta) => (
           <View style={{ paddingHorizontal: spacing.md, paddingBottom: spacing.md }}>
             <OfferCard
