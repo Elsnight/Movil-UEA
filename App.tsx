@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './src/theme/ThemeProvider';
@@ -11,31 +11,40 @@ import { queryClient } from './src/lib/queryClient';
 import { color, spacing } from './src/theme/tokens';
 
 function AppContent() {
-  const cargarSesion = useAuthStore((s) => s.cargarSesion);
-  const [error, setError] = useState('');
+  const [ready, setReady] = useState(false);
+  const [initError, setInitError] = useState('');
 
   useEffect(() => {
-    let activo = true;
+    let active = true;
     void (async () => {
       try {
         await iniciarBD();
-        await cargarSesion();
+        await useAuthStore.getState().cargarSesion();
       } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
+        if (active) setInitError(e instanceof Error ? e.message : String(e));
       }
-      if (activo && useAuthStore.getState().usuario) {
+      if (active && useAuthStore.getState().usuario) {
         iniciarSyncAutomatico();
       }
+      if (active) setReady(true);
     })();
-    return () => { activo = false; };
+    return () => { active = false; };
   }, []);
 
-  if (error) {
+  if (initError) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg, backgroundColor: color.dangerLight }}>
         <Text style={{ fontSize: 16, color: '#22201D', textAlign: 'center' }}>
-          Error al iniciar: {error}
+          Error al iniciar: {initError}
         </Text>
+      </View>
+    );
+  }
+
+  if (!ready) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: color.background }}>
+        <ActivityIndicator size="large" color={color.primary} />
       </View>
     );
   }
