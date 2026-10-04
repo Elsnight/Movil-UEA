@@ -3,9 +3,10 @@ import * as SecureStore from 'expo-secure-store';
 
 const TOKEN_KEY = 'accessToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
+const baseURL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/+$/, '');
 
 const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000',
+  baseURL,
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' },
 });
