@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import NetInfo from '@react-native-community/netinfo';
 import { ofertasService, type Oferta } from '../services/ofertasService';
+import { ApiError } from '../services/api';
 import { ofertasRepository } from '../db/ofertasRepository';
 import type { OfertaCacheada } from '../db/schema';
 
@@ -14,6 +15,7 @@ type UseOfertasParams = {
 
 type UseOfertasResult = {
   data: Oferta[] | undefined;
+  meta: { pagina: number; limite: number; total: number; total_paginas: number } | undefined;
   isLoading: boolean;
   isError: boolean;
   refetch: () => void;
@@ -24,6 +26,7 @@ type UseOfertasResult = {
 
 type OfertasQueryData = {
   ofertas: Oferta[];
+  meta: { pagina: number; limite: number; total: number; total_paginas: number };
   isFromCache: boolean;
   cacheAgeMinutos: number | null;
 };
@@ -41,11 +44,16 @@ export function useOfertas(params?: UseOfertasParams): UseOfertasResult {
 
       if (netState.isConnected && netState.isInternetReachable !== false) {
         try {
-          const ofertas = await ofertasService.listar(
+          const result = await ofertasService.listar(
             params as Record<string, string | number | undefined>,
           );
-          await ofertasRepository.guardarOfertas(ofertas);
-          return { ofertas, isFromCache: false, cacheAgeMinutos: null };
+          await ofertasRepository.guardarOfertas(result.data);
+          return {
+            ofertas: result.data,
+            meta: (result.meta as { pagina: number; limite: number; total: number; total_paginas: number }) ?? { pagina: 1, limite: 20, total: 0, total_paginas: 0 },
+            isFromCache: false,
+            cacheAgeMinutos: null,
+          };
         } catch (error) {
           const cache = await obtenerCache();
           if (cache) return cache;
@@ -63,6 +71,7 @@ export function useOfertas(params?: UseOfertasParams): UseOfertasResult {
 
   return {
     data: query.data?.ofertas,
+    meta: query.data?.meta,
     isLoading: query.isLoading,
     isError: query.isError,
     refetch: () => query.refetch(),
@@ -71,14 +80,16 @@ export function useOfertas(params?: UseOfertasParams): UseOfertasResult {
     errorMessage:
       query.error instanceof Error && query.error.message === ERROR_SIN_CONEXION
         ? ERROR_SIN_CONEXION
-        : ERROR_CARGA,
+        : query.error instanceof ApiError
+          ? query.error.message
+          : ERROR_CARGA,
   };
 }
 
 export function useOfertaPorId(id: string) {
   return useQuery({
     queryKey: ['oferta', id],
-    queryFn: () => ofertasService.obtenerPorId(id),
+    queryFn: () => ofertasService.obtenerPorId(id).then((r) => r.data),
     enabled: !!id,
   });
 }
@@ -99,6 +110,7 @@ async function obtenerCache(): Promise<OfertasQueryData | null> {
 
   return {
     ofertas: cache.map(mapaCacheAOferta),
+    meta: { pagina: 1, limite: cache.length, total: cache.length, total_paginas: 1 },
     isFromCache: true,
     cacheAgeMinutos: syncedAt ? calcularMinutosDesde(syncedAt) : 0,
   };
@@ -111,6 +123,7 @@ function mapaCacheAOferta(c: OfertaCacheada): Oferta {
     descripcion: c.descripcion,
     precioOriginal: c.precio_original,
     precioOferta: c.precio_oferta,
+    sucursal: { id: c.sucursal_id },
     cantidadDisponible: c.cantidad_disponible,
     unidad: c.unidad,
     estado: c.estado_oferta,

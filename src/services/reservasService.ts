@@ -1,40 +1,49 @@
-import { api } from './api';
+import { api, unwrapApiResponse, type ApiResult } from './api';
+
+export type OfertaResumida = {
+  id: string;
+  titulo: string;
+  precioOferta: number;
+  imagenUrl?: string;
+  comercio: { id: string; nombre: string; direccion: string };
+};
+
+export type ReservaItem = {
+  oferta_id: string;
+  cantidad: number;
+  precio_unitario: number;
+  subtotal_linea: number;
+  oferta: OfertaResumida;
+};
 
 export type Reserva = {
   id: string;
+  reserva_id: string;
   usuarioId: string;
-  ofertaId: string;
-  cantidad: number;
-  codigoRetiro: string;
+  sucursal_id: string;
+  codigo_retiro: string;
   estado: string;
+  total_pagar: number;
+  items: ReservaItem[];
+  oferta: OfertaResumida;
   createdAt: string;
-  oferta: {
-    id: string;
-    titulo: string;
-    precioOferta: number;
-    imagenUrl?: string;
-    comercio: { id: string; nombre: string; direccion: string };
-  };
 };
 
-function extraerLista(respuesta: unknown): Reserva[] {
-  if (Array.isArray(respuesta)) return respuesta;
-  if (respuesta && typeof respuesta === 'object' && 'data' in (respuesta as Record<string, unknown>) && Array.isArray((respuesta as Record<string, unknown>).data)) {
-    return (respuesta as Record<string, unknown>).data as Reserva[];
-  }
-  return [];
-}
+type Envelope<T> = { success: boolean; data: T; meta?: Record<string, unknown> };
+
+export type CrearReservaInput = {
+  sucursal_id: string;
+  items: { oferta_id: string; cantidad: number }[];
+};
 
 export const reservasService = {
-  listar: async () => {
-    const res = await api.get<{ success: boolean; data: unknown }>('/api/reservas/mias');
-    return extraerLista(res.data.data);
+  listar: async (): Promise<ApiResult<Reserva[]>> => {
+    const res = await api.get<Envelope<Reserva[]>>('/api/reservas/mias');
+    return unwrapApiResponse(res.data);
   },
-  crear: async (data: { ofertaId: string; cantidad: number }) => {
-    const res = await api.post<{ success: boolean; data: Reserva }>('/api/reservas', {
-      oferta_id: data.ofertaId,
-      cantidad: data.cantidad,
-    });
-    return res.data.data;
+
+  crear: async (data: CrearReservaInput): Promise<ApiResult<Reserva>> => {
+    const res = await api.post<Envelope<Reserva>>('/api/reservas', data);
+    return unwrapApiResponse(res.data);
   },
 };

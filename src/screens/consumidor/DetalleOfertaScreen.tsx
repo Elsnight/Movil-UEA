@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ConsumidorStackParamList } from '../../navigation/types';
+import { ApiError } from '../../services/api';
 import { color, spacing, radius, typography } from '../../theme/tokens';
 import { Button } from '../../components/Button/Button';
 import { StatusBadge } from '../../components/StatusBadge/StatusBadge';
@@ -49,8 +50,12 @@ export function DetalleOfertaScreen({ route, navigation }: Props) {
   const disponible = oferta.estado === 'DISPONIBLE' && oferta.cantidadDisponible > 0;
 
   const handleReservar = async () => {
+    if (!oferta?.sucursal?.id) return;
     try {
-      await crearReserva.mutateAsync({ ofertaId, cantidad: 1 });
+      await crearReserva.mutateAsync({
+        sucursal_id: oferta.sucursal.id,
+        items: [{ oferta_id: oferta.id, cantidad: 1 }],
+      });
       setReservaExito(true);
     } catch {
       // error state handled by mutation
@@ -238,8 +243,9 @@ export function DetalleOfertaScreen({ route, navigation }: Props) {
           )}
           {crearReserva.isError && (
             <Text style={[typography.caption, { color: color.danger, textAlign: 'center', marginTop: spacing.xs }]}>
-              {(crearReserva.error as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ??
-                'Error al realizar la reserva'}
+              {crearReserva.error instanceof ApiError
+                ? crearReserva.error.message
+                : 'Error al realizar la reserva'}
             </Text>
           )}
         </View>

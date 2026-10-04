@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api, unwrapApiResponse, type ApiResult } from './api';
 
 export type Oferta = {
   id: string;
@@ -7,6 +7,7 @@ export type Oferta = {
   precioOriginal: number;
   precioOferta: number;
   cantidadDisponible: number;
+  sucursal: { id: string };
   unidad: string;
   estado: string;
   fechaVencimiento: string;
@@ -15,23 +16,23 @@ export type Oferta = {
   createdAt: string;
 };
 
-type RailwayEnvelope<T> = { success: boolean; data: T };
+type OfertaPaginada = {
+  pagina: number;
+  limite: number;
+  total: number;
+  total_paginas: number;
+};
 
-function extraerLista(respuesta: unknown): Oferta[] {
-  if (Array.isArray(respuesta)) return respuesta;
-  if (respuesta && typeof respuesta === 'object' && 'data' in (respuesta as Record<string, unknown>) && Array.isArray((respuesta as Record<string, unknown>).data)) {
-    return (respuesta as Record<string, unknown>).data as Oferta[];
-  }
-  return [];
-}
+export type OfertaListaResultado = ApiResult<Oferta[], OfertaPaginada>;
+type Envelope<T> = { success: boolean; data: T; meta?: OfertaPaginada };
 
 export const ofertasService = {
-  listar: async (params?: Record<string, string | number | undefined>) => {
-    const res = await api.get<RailwayEnvelope<unknown>>('/api/ofertas', { params });
-    return extraerLista(res.data.data);
+  listar: async (params?: Record<string, string | number | undefined>): Promise<OfertaListaResultado> => {
+    const res = await api.get<Envelope<Oferta[]>>('/api/ofertas', { params });
+    return unwrapApiResponse(res.data);
   },
-  obtenerPorId: async (id: string) => {
-    const res = await api.get<RailwayEnvelope<Oferta>>(`/api/ofertas/${id}`);
-    return res.data.data;
+  obtenerPorId: async (id: string): Promise<ApiResult<Oferta>> => {
+    const res = await api.get<Envelope<Oferta>>(`/api/ofertas/${id}`);
+    return unwrapApiResponse(res.data);
   },
 };

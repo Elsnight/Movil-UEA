@@ -16,16 +16,25 @@ import { z } from 'zod';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import type { AuthStackParamList } from '../../navigation/types';
+import { ApiError } from '../../services/api';
 import { color, spacing, radius, typography } from '../../theme/tokens';
 import { Button } from '../../components/Button/Button';
 import { authService } from '../../services/authService';
 import { useAuthStore } from '../../store/authStore';
 
 const registroSchema = z.object({
-  nombre: z.string().min(2, 'Mínimo 2 caracteres'),
+  nombres: z.string().min(1, 'Los nombres son obligatorios').transform((v) => v.trim()),
+  apellidos: z.string().min(1, 'Los apellidos son obligatorios').transform((v) => v.trim()),
   email: z.string().email('Correo electrónico inválido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  password: z.string()
+    .min(8, 'Mínimo 8 caracteres')
+    .regex(/[a-zA-Z]/, 'Debe contener al menos una letra')
+    .regex(/[0-9]/, 'Debe contener al menos un número'),
+  confirmarPassword: z.string(),
   rol: z.enum(['CONSUMIDOR', 'COMERCIANTE']),
+}).refine((data) => data.password === data.confirmarPassword, {
+  message: 'Las contraseñas no coinciden',
+  path: ['confirmarPassword'],
 });
 
 type RegistroFormData = z.infer<typeof registroSchema>;
@@ -53,7 +62,7 @@ export function RegistroScreen({ navigation }: Props) {
     formState: { errors },
   } = useForm<RegistroFormData>({
     resolver: zodResolver(registroSchema),
-    defaultValues: { nombre: '', email: '', password: '', rol: 'CONSUMIDOR' },
+    defaultValues: { nombres: '', apellidos: '', email: '', password: '', confirmarPassword: '', rol: 'CONSUMIDOR' },
   });
 
   const selectedRol = watch('rol');
@@ -62,11 +71,17 @@ export function RegistroScreen({ navigation }: Props) {
     setLoading(true);
     setError('');
     try {
-      const res = await authService.registro(data);
+      const { data: sesion } = await authService.registro({
+        email: data.email,
+        password: data.password,
+        nombres: data.nombres,
+        apellidos: data.apellidos,
+        rol: data.rol,
+      });
       await setSesion(
-        res.token,
-        res.refreshToken,
-        res.usuario as {
+        sesion.token,
+        sesion.refreshToken,
+        sesion.usuario as {
           id: string;
           email: string;
           nombre: string;
@@ -75,8 +90,9 @@ export function RegistroScreen({ navigation }: Props) {
       );
     } catch (e: unknown) {
       const msg =
-        (e as { response?: { data?: { mensaje?: string } } })?.response?.data
-          ?.mensaje ?? 'Error al registrarse. Intenta de nuevo.';
+        e instanceof ApiError
+          ? e.message
+          : 'Error al registrarse. Intenta de nuevo.';
       setError(msg);
     } finally {
       setLoading(false);
@@ -139,25 +155,25 @@ export function RegistroScreen({ navigation }: Props) {
 
         <View style={{ marginBottom: spacing.md }}>
           <Text style={[typography.caption, { color: color.textSecondary, marginBottom: spacing.xs }]}>
-            Nombre
+            Nombres
           </Text>
           <Controller
             control={control}
-            name="nombre"
+            name="nombres"
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
-                placeholder="Tu nombre"
+                placeholder="Tus nombres"
                 placeholderTextColor={color.border}
                 autoCapitalize="words"
                 autoComplete="name"
-                accessibilityLabel="Nombre"
+                accessibilityLabel="Nombres"
                 style={{
                   backgroundColor: color.surface,
                   borderWidth: 1,
-                  borderColor: errors.nombre ? color.danger : color.border,
+                  borderColor: errors.nombres ? color.danger : color.border,
                   borderRadius: radius.input,
                   paddingHorizontal: spacing.md,
                   height: 52,
@@ -167,9 +183,46 @@ export function RegistroScreen({ navigation }: Props) {
               />
             )}
           />
-          {errors.nombre && (
+          {errors.nombres && (
             <Text style={[typography.caption, { color: color.danger, marginTop: spacing.xs }]}>
-              {errors.nombre.message}
+              {errors.nombres.message}
+            </Text>
+          )}
+        </View>
+
+        <View style={{ marginBottom: spacing.md }}>
+          <Text style={[typography.caption, { color: color.textSecondary, marginBottom: spacing.xs }]}>
+            Apellidos
+          </Text>
+          <Controller
+            control={control}
+            name="apellidos"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                placeholder="Tus apellidos"
+                placeholderTextColor={color.border}
+                autoCapitalize="words"
+                autoComplete="family-name"
+                accessibilityLabel="Apellidos"
+                style={{
+                  backgroundColor: color.surface,
+                  borderWidth: 1,
+                  borderColor: errors.apellidos ? color.danger : color.border,
+                  borderRadius: radius.input,
+                  paddingHorizontal: spacing.md,
+                  height: 52,
+                  fontSize: typography.body.fontSize,
+                  color: color.textPrimary,
+                }}
+              />
+            )}
+          />
+          {errors.apellidos && (
+            <Text style={[typography.caption, { color: color.danger, marginTop: spacing.xs }]}>
+              {errors.apellidos.message}
             </Text>
           )}
         </View>
@@ -246,6 +299,44 @@ export function RegistroScreen({ navigation }: Props) {
           {errors.password && (
             <Text style={[typography.caption, { color: color.danger, marginTop: spacing.xs }]}>
               {errors.password.message}
+            </Text>
+          )}
+        </View>
+
+        <View style={{ marginBottom: spacing.md }}>
+          <Text style={[typography.caption, { color: color.textSecondary, marginBottom: spacing.xs }]}>
+            Confirmar contraseña
+          </Text>
+          <Controller
+            control={control}
+            name="confirmarPassword"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                placeholder="Repite la contraseña"
+                placeholderTextColor={color.border}
+                secureTextEntry
+                autoCapitalize="none"
+                autoComplete="new-password"
+                accessibilityLabel="Confirmar contraseña"
+                style={{
+                  backgroundColor: color.surface,
+                  borderWidth: 1,
+                  borderColor: errors.confirmarPassword ? color.danger : color.border,
+                  borderRadius: radius.input,
+                  paddingHorizontal: spacing.md,
+                  height: 52,
+                  fontSize: typography.body.fontSize,
+                  color: color.textPrimary,
+                }}
+              />
+            )}
+          />
+          {errors.confirmarPassword && (
+            <Text style={[typography.caption, { color: color.danger, marginTop: spacing.xs }]}>
+              {errors.confirmarPassword.message}
             </Text>
           )}
         </View>

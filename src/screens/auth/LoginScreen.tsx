@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import type { AuthStackParamList } from '../../navigation/types';
+import { ApiError } from '../../services/api';
 import { color, spacing, radius, typography } from '../../theme/tokens';
 import { Button } from '../../components/Button/Button';
 import { authService } from '../../services/authService';
@@ -48,11 +49,11 @@ export function LoginScreen({ navigation }: Props) {
     setLoading(true);
     setError('');
     try {
-      const res = await authService.login(data);
+      const { data: sesion } = await authService.login(data);
       await setSesion(
-        res.token,
-        res.refreshToken,
-        res.usuario as {
+        sesion.token,
+        sesion.refreshToken,
+        sesion.usuario as {
           id: string;
           email: string;
           nombre: string;
@@ -61,8 +62,9 @@ export function LoginScreen({ navigation }: Props) {
       );
     } catch (e: unknown) {
       const msg =
-        (e as { response?: { data?: { mensaje?: string } } })?.response?.data
-          ?.mensaje ?? 'Error al iniciar sesión. Verifica tus credenciales.';
+        e instanceof ApiError
+          ? e.message
+          : 'Error al iniciar sesión. Verifica tus credenciales.';
       setError(msg);
     } finally {
       setLoading(false);

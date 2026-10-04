@@ -21,9 +21,9 @@ export function useFavoritos() {
       const netState = await NetInfo.fetch();
       if (netState.isConnected && netState.isInternetReachable !== false) {
         try {
-          const ids = await favoritosService.listarIds();
-          await favoritosRepository.reemplazar(ids);
-          return ids;
+          const result = await favoritosService.listarIds();
+          await favoritosRepository.reemplazar(result.data);
+          return result.data;
         } catch {
           return favoritosRepository.obtenerIds();
         }
@@ -89,8 +89,8 @@ export function useFavoritos() {
             }
             return;
           } catch (error) {
-            const status = (error as { response?: { status?: number } })
-              .response?.status;
+            const apiError = error as { response?: { status?: number } };
+            const status = apiError.response?.status;
             const estadoDeseadoYaExiste =
               (!estabaMarcado && status === 409) ||
               (estabaMarcado && status === 404);

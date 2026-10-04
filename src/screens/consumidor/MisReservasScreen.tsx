@@ -179,7 +179,7 @@ export function MisReservasScreen() {
                   <Text
                     style={[typography.caption, { color: color.textSecondary }]}
                   >
-                    x{item.cantidad}
+                    x{item.items?.[0]?.cantidad ?? 1}
                   </Text>
                 </View>
 
@@ -197,7 +197,7 @@ export function MisReservasScreen() {
                   </Text>
                 ) : null}
 
-                {item.codigoRetiro ? (
+                {item.codigo_retiro ? (
                   <View
                     style={{
                       backgroundColor: color.background,
@@ -223,9 +223,9 @@ export function MisReservasScreen() {
                           letterSpacing: 4,
                         },
                       ]}
-                      accessibilityLabel={`Código de retiro: ${item.codigoRetiro}`}
+                      accessibilityLabel={`Código de retiro: ${item.codigo_retiro}`}
                     >
-                      {item.codigoRetiro}
+                      {item.codigo_retiro}
                     </Text>
                   </View>
                 ) : null}

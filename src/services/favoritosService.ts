@@ -1,34 +1,12 @@
-import { api } from './api';
+import { api, unwrapApiResponse, type ApiResult } from './api';
 
-type FavoritoApi = {
-  comercio_id?: string;
-  comercioId?: string;
-  comercio?: { id?: string };
-};
-
-type RailwayEnvelope<T> = { success: boolean; data: T };
-
-function extraerLista(respuesta: unknown): FavoritoApi[] {
-  if (Array.isArray(respuesta)) return respuesta as FavoritoApi[];
-  if (respuesta && typeof respuesta === 'object') {
-    const data = (respuesta as { data?: unknown }).data;
-    if (Array.isArray(data)) return data as FavoritoApi[];
-  }
-  return [];
-}
-
-function obtenerComercioId(favorito: FavoritoApi): string | null {
-  return (
-    favorito.comercio_id ?? favorito.comercioId ?? favorito.comercio?.id ?? null
-  );
-}
+type Envelope<T> = { success: boolean; data: T; meta?: Record<string, unknown> };
 
 export const favoritosService = {
-  listarIds: async (): Promise<string[]> => {
-    const res = await api.get<RailwayEnvelope<unknown>>('/api/favoritos');
-    return extraerLista(res.data.data)
-      .map(obtenerComercioId)
-      .filter((id): id is string => id !== null);
+  listarIds: async (): Promise<ApiResult<string[]>> => {
+    const res = await api.get<Envelope<{ id: string }[]>>('/api/favoritos');
+    const result = unwrapApiResponse(res.data);
+    return { data: result.data.map((item) => item.id), meta: result.meta };
   },
 
   marcar: async (comercioId: string, idempotencyKey: string): Promise<void> => {
@@ -39,10 +17,7 @@ export const favoritosService = {
     );
   },
 
-  desmarcar: async (
-    comercioId: string,
-    idempotencyKey: string,
-  ): Promise<void> => {
+  desmarcar: async (comercioId: string, idempotencyKey: string): Promise<void> => {
     await api.delete(`/api/favoritos/${comercioId}`, {
       headers: { 'Idempotency-Key': idempotencyKey },
     });
