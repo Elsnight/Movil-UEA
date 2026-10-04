@@ -39,10 +39,24 @@ type AuthStore = {
   cargarSesion: () => Promise<void>;
 };
 
+async function allSettledSafe<T>(
+  promises: Promise<T>[],
+): Promise<PromiseSettledResult<T>[]> {
+  if (Promise.allSettled) return Promise.allSettled(promises);
+  return Promise.all(
+    promises.map((p) =>
+      p.then(
+        (value) => ({ status: 'fulfilled' as const, value }),
+        (reason) => ({ status: 'rejected' as const, reason }),
+      ),
+    ),
+  );
+}
+
 async function borrarSesionLocal(): Promise<void> {
   detenerSyncAutomatico();
   queryClient.clear();
-  const resultados = await Promise.allSettled([
+  const resultados = await allSettledSafe([
     SecureStore.deleteItemAsync(TOKEN_KEY),
     SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY),
     SecureStore.deleteItemAsync(USUARIO_KEY),
@@ -50,8 +64,11 @@ async function borrarSesionLocal(): Promise<void> {
   ]);
   useFavoritosStore.getState().limpiar();
 
-  if (resultados.some((resultado) => resultado.status === 'rejected')) {
-    console.warn('No se pudieron borrar todos los datos locales de la sesión.');
+  const hayFallo = resultados.some
+    ? resultados.some((r) => r.status === 'rejected')
+    : resultados.filter((r) => r.status === 'rejected').length > 0;
+  if (hayFallo) {
+    console.warn?.('No se pudieron borrar todos los datos locales de la sesión.');
   }
 }
 
@@ -77,7 +94,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       try {
         await authService.logout(refreshToken);
       } catch {
-        console.warn('No se pudo notificar el cierre de sesión al servidor.');
+        console.warn?.('No se pudo notificar el cierre de sesión al servidor.');
       }
     }
 
@@ -126,7 +143,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           await get().cerrarSesion(false);
           return;
         }
-        console.warn('No se pudo renovar la sesión al iniciar la aplicación.');
+        console.warn?.('No se pudo renovar la sesión al iniciar la aplicación.');
         set({ token, refreshToken, usuario, isLoading: false });
       }
     } catch {

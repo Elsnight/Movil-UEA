@@ -181,11 +181,11 @@ api.interceptors.response.use(
         return await api(config);
       } catch (refreshError) {
         await sessionExpiredHandler?.();
-        return Promise.reject(normalizeApiError(refreshError));
+        return new Promise((_, reject) => reject(normalizeApiError(refreshError)));
       }
     }
 
-    return Promise.reject(normalizeApiError(error));
+    return new Promise((_, reject) => reject(normalizeApiError(error)));
   },
 );
 

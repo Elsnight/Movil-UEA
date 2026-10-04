@@ -12,11 +12,19 @@ function AppContent() {
   const cargarSesion = useAuthStore((s) => s.cargarSesion);
 
   useEffect(() => {
+    let activo = true;
     void (async () => {
-      await iniciarBD();
-      await cargarSesion();
-      if (useAuthStore.getState().usuario) iniciarSyncAutomatico();
+      try {
+        await iniciarBD();
+        await cargarSesion();
+      } catch {
+        // Error silencioso — el store ya está en isLoading:false
+      }
+      if (activo && useAuthStore.getState().usuario) {
+        iniciarSyncAutomatico();
+      }
     })();
+    return () => { activo = false; };
   }, []);
 
   return <RootNavigator />;
