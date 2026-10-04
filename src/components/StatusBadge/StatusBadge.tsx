@@ -7,14 +7,14 @@ type StatusBadgeProps = {
 };
 
 const config: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; bgColor: string; textColor: string; iconColor: string }> = {
-  DISPONIBLE: { label: 'Disponible', icon: 'checkmark-circle', bgColor: '#E8F5E9', textColor: color.success, iconColor: color.success },
-  PAUSADA: { label: 'Pausada', icon: 'pause-circle', bgColor: '#FFF8E1', textColor: color.warning, iconColor: color.warning },
-  AGOTADA: { label: 'Agotada', icon: 'close-circle', bgColor: '#F5F0EB', textColor: color.textSecondary, iconColor: color.textSecondary },
-  EXPIRADA: { label: 'Expirada', icon: 'time', bgColor: '#FFEBEE', textColor: color.danger, iconColor: color.danger },
+  DISPONIBLE: { label: 'Disponible', icon: 'checkmark-circle', bgColor: color.successLightest, textColor: color.success, iconColor: color.success },
+  PAUSADA: { label: 'Pausada', icon: 'pause-circle', bgColor: color.warningLight, textColor: color.warning, iconColor: color.warning },
+  AGOTADA: { label: 'Agotada', icon: 'close-circle', bgColor: color.neutralLight, textColor: color.textSecondary, iconColor: color.textSecondary },
+  EXPIRADA: { label: 'Expirada', icon: 'time', bgColor: color.dangerLight, textColor: color.danger, iconColor: color.danger },
 };
 
 export function StatusBadge({ estado }: StatusBadgeProps) {
-  const cfg = config[estado] ?? { label: estado, icon: 'help-circle' as const, bgColor: '#F5F0EB', textColor: color.textSecondary, iconColor: color.textSecondary };
+  const cfg = config[estado] ?? { label: estado, icon: 'help-circle' as const, bgColor: color.neutralLight, textColor: color.textSecondary, iconColor: color.textSecondary };
 
   return (
     <View

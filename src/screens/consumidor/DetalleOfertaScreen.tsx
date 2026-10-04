@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Image,
   View,
   Text,
   ScrollView,
@@ -10,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ConsumidorStackParamList } from '../../navigation/types';
+import { formatUSD, formatUSDLabel } from '../../utils/formatUSD';
 import { ApiError } from '../../services/api';
 import { color, spacing, radius, typography } from '../../theme/tokens';
 import { Button } from '../../components/Button/Button';
@@ -25,6 +27,7 @@ export function DetalleOfertaScreen({ route, navigation }: Props) {
   const { data: oferta, isLoading, isError, refetch } = useOfertaPorId(ofertaId);
   const crearReserva = useCrearReserva();
   const [reservaExito, setReservaExito] = useState(false);
+  const [cantidad, setCantidad] = useState(1);
 
   if (isLoading) {
     return (
@@ -48,19 +51,28 @@ export function DetalleOfertaScreen({ route, navigation }: Props) {
 
   const descuento = Math.round((1 - oferta.precioOferta / oferta.precioOriginal) * 100);
   const disponible = oferta.estado === 'DISPONIBLE' && oferta.cantidadDisponible > 0;
+  const stockMax = Math.min(oferta.cantidadDisponible, 99);
 
   const handleReservar = async () => {
     if (!oferta?.sucursal?.id) return;
     try {
       await crearReserva.mutateAsync({
         sucursal_id: oferta.sucursal.id,
-        items: [{ oferta_id: oferta.id, cantidad: 1 }],
+        items: [{ oferta_id: oferta.id, cantidad }],
       });
       setReservaExito(true);
     } catch {
       // error state handled by mutation
     }
   };
+
+  const errorMensaje = crearReserva.isError
+    ? (crearReserva.error instanceof ApiError && crearReserva.error.status === 409
+      ? 'Ya no hay stock suficiente'
+      : crearReserva.error instanceof ApiError
+        ? crearReserva.error.message
+        : 'Error al realizar la reserva')
+    : '';
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background }}>
@@ -75,7 +87,13 @@ export function DetalleOfertaScreen({ route, navigation }: Props) {
             backgroundColor: color.border,
           }}
         >
-          {oferta.imagenUrl ? null : (
+          {oferta.imagenUrl ? (
+            <Image
+              source={{ uri: oferta.imagenUrl }}
+              style={{ width: '100%', height: 240 }}
+              resizeMode="cover"
+            />
+          ) : (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
               <Ionicons name="image-outline" size={64} color={color.border} />
             </View>
@@ -84,7 +102,6 @@ export function DetalleOfertaScreen({ route, navigation }: Props) {
             onPress={() => navigation.goBack()}
             accessibilityRole="button"
             accessibilityLabel="Volver"
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             style={{
               position: 'absolute',
               top: insets.top + spacing.sm,
@@ -122,10 +139,10 @@ export function DetalleOfertaScreen({ route, navigation }: Props) {
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             <Text style={[typography.price, { color: color.primary }]}>
-              {oferta.precioOferta.toFixed(2)}€
+              {formatUSD(oferta.precioOferta)}
             </Text>
             <Text style={[typography.body, { color: color.textSecondary, textDecorationLine: 'line-through' }]}>
-              {oferta.precioOriginal.toFixed(2)}€
+              {formatUSD(oferta.precioOriginal)}
             </Text>
             <View style={{
               backgroundColor: color.successLight,
@@ -224,17 +241,51 @@ export function DetalleOfertaScreen({ route, navigation }: Props) {
             borderTopColor: color.border,
           }}
         >
+          {disponible && (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: spacing.md,
+                marginBottom: spacing.sm,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => setCantidad(Math.max(1, cantidad - 1))}
+                accessibilityRole="button"
+                accessibilityLabel="Reducir cantidad"
+                style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Ionicons name="remove-circle" size={24} color={color.textPrimary} />
+              </TouchableOpacity>
+              <Text
+                style={[typography.heading, { color: color.textPrimary }]}
+                accessibilityLabel={`Cantidad seleccionada: ${cantidad}`}
+              >
+                {cantidad}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setCantidad(Math.min(stockMax, cantidad + 1))}
+                accessibilityRole="button"
+                accessibilityLabel="Aumentar cantidad"
+                style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Ionicons name="add-circle" size={24} color={color.textPrimary} />
+              </TouchableOpacity>
+            </View>
+          )}
           <Button
             label={
               crearReserva.isPending
                 ? 'Reservando…'
-                : `Reservar por ${oferta.precioOferta.toFixed(2)}€`
+                : `Reservar ${formatUSD(oferta.precioOferta * cantidad)}`
             }
             onPress={handleReservar}
             loading={crearReserva.isPending}
             disabled={!disponible || crearReserva.isPending}
             size="lg"
-            accessibilityLabel={`Reservar ${oferta.titulo} por ${oferta.precioOferta.toFixed(2)} euros`}
+            accessibilityLabel={`Reservar ${oferta.titulo} por ${formatUSDLabel(oferta.precioOferta * cantidad)}`}
           />
           {!disponible && (
             <Text style={[typography.caption, { color: color.danger, textAlign: 'center', marginTop: spacing.xs }]}>
@@ -243,9 +294,7 @@ export function DetalleOfertaScreen({ route, navigation }: Props) {
           )}
           {crearReserva.isError && (
             <Text style={[typography.caption, { color: color.danger, textAlign: 'center', marginTop: spacing.xs }]}>
-              {crearReserva.error instanceof ApiError
-                ? crearReserva.error.message
-                : 'Error al realizar la reserva'}
+              {errorMensaje}
             </Text>
           )}
         </View>

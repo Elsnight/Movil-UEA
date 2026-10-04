@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { formatUSD } from '../../utils/formatUSD';
 import { color, spacing, radius, typography } from '../../theme/tokens';
 import { ListState } from '../../components/ListState/ListState';
 import { useReservas } from '../../hooks/useReservas';
@@ -20,31 +21,31 @@ const RESERVA_CONFIG: Record<
     label: 'Pendiente',
     icon: 'time-outline',
     color: color.warning,
-    bgColor: '#FFF8E1',
+    bgColor: color.warningLight,
   },
   LISTA_RETIRO: {
     label: 'Lista para retirar',
     icon: 'checkmark-circle',
     color: color.success,
-    bgColor: '#E8F5E9',
+    bgColor: color.successLightest,
   },
   RETIRADA: {
     label: 'Retirada',
     icon: 'checkmark-done',
     color: color.success,
-    bgColor: '#E8F5E9',
+    bgColor: color.successLightest,
   },
   CANCELADA: {
     label: 'Cancelada',
     icon: 'close-circle',
     color: color.textSecondary,
-    bgColor: '#F5F0EB',
+    bgColor: color.neutralLight,
   },
   EXPIRADA: {
     label: 'Vencida',
     icon: 'alert-circle',
     color: color.danger,
-    bgColor: '#FFEBEE',
+    bgColor: color.dangerLight,
   },
 };
 
@@ -72,7 +73,7 @@ export function MisReservasScreen() {
           accessibilityRole="button"
           accessibilityLabel="Cerrar sesión"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={{ minHeight: 44, justifyContent: 'center' }}
+          style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
         >
           <Ionicons
             name="log-out-outline"
@@ -174,7 +175,7 @@ export function MisReservasScreen() {
                   }}
                 >
                   <Text style={[typography.price, { color: color.primary }]}>
-                    {item.oferta?.precioOferta?.toFixed(2) ?? '0.00'}€
+                    {formatUSD(item.oferta?.precioOferta ?? 0)}
                   </Text>
                   <Text
                     style={[typography.caption, { color: color.textSecondary }]}

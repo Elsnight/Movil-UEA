@@ -100,6 +100,10 @@ export const color = {
   danger: primitive.red500,
   border: primitive.neutral200,
   overlay: 'rgba(34, 32, 29, 0.6)',
+  dangerLight: '#FFEBEE',
+  warningLight: '#FFF8E1',
+  successLightest: '#E8F5E9',
+  neutralLight: '#F5F0EB',
 } as const;
 
 export const spacing = {

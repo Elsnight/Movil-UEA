@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { formatUSD, formatUSDLabel } from '../../utils/formatUSD';
 import { color, spacing, radius, typography } from '../../theme/tokens';
 import { OfferCardProps } from './OfferCard.types';
 
@@ -27,7 +28,7 @@ export function OfferCard({
       accessibilityRole="button"
       accessibilityLabel={
         accessibilityLabel ??
-        `${titulo} - ${precioOferta} euros en ${comercioNombre}`
+        `${titulo} - ${formatUSDLabel(precioOferta)} en ${comercioNombre}`
       }
       style={({ pressed }) => ({
         backgroundColor: color.surface,
@@ -90,7 +91,16 @@ export function OfferCard({
             backgroundColor: color.border,
           }}
         >
-          {imagenUrl ? null : (
+          {imagenUrl ? (
+            <Image
+              source={{ uri: imagenUrl }}
+              style={{
+                width: isCompact ? 100 : '100%',
+                height: isCompact ? '100%' : 160,
+              }}
+              resizeMode="cover"
+            />
+          ) : (
             <View
               style={{
                 flex: 1,
@@ -130,7 +140,7 @@ export function OfferCard({
             }}
           >
             <Text style={[typography.price, { color: color.primary }]}>
-              {precioOferta.toFixed(2)}€
+              {formatUSD(precioOferta)}
             </Text>
             <Text
               style={[
@@ -141,7 +151,7 @@ export function OfferCard({
                 },
               ]}
             >
-              {precioOriginal.toFixed(2)}€
+              {formatUSD(precioOriginal)}
             </Text>
             <View
               style={{

@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { AuthStack } from './AuthStack';
 import { ConsumidorStack } from './ConsumidorStack';
 import { ComercianteTabs } from './ComercianteTabs';
+import { AdminTabs } from './AdminTabs';
 import { color } from '../theme/tokens';
 import type { RootStackParamList } from './types';
 
@@ -32,6 +33,8 @@ export function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {usuario.rol === 'COMERCIANTE' ? (
         <Stack.Screen name="Comerciante" component={ComercianteTabs} />
+      ) : usuario.rol === 'ADMINISTRADOR' ? (
+        <Stack.Screen name="Administrador" component={AdminTabs} />
       ) : (
         <Stack.Screen name="Consumidor" component={ConsumidorStack} />
       )}

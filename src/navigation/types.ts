@@ -14,6 +14,10 @@ export type ComercianteTabParamList = {
   ValidarRetiro: undefined;
 };
 
+export type AdminTabParamList = {
+  Pendientes: undefined;
+};
+
 export type ConsumidorStackParamList = {
   ConsumidorTabs: undefined;
   DetalleOferta: { ofertaId: string };
@@ -23,4 +27,5 @@ export type RootStackParamList = {
   Auth: undefined;
   Consumidor: undefined;
   Comerciante: undefined;
+  Administrador: undefined;
 };

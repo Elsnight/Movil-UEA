@@ -118,7 +118,7 @@ export function RegistroScreen({ navigation }: Props) {
           accessibilityRole="button"
           accessibilityLabel="Volver"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={{ marginBottom: spacing.md, alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' }}
+          style={{ marginBottom: spacing.md, alignSelf: 'flex-start', width: 44, height: 44, justifyContent: 'center' }}
         >
           <Ionicons name="arrow-back" size={24} color={color.textPrimary} />
         </TouchableOpacity>
@@ -139,7 +139,7 @@ export function RegistroScreen({ navigation }: Props) {
               flexDirection: 'row',
               alignItems: 'center',
               gap: spacing.sm,
-              backgroundColor: '#FFEBEE',
+              backgroundColor: color.dangerLight,
               padding: spacing.md,
               borderRadius: radius.input,
               marginBottom: spacing.md,

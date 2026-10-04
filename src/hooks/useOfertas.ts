@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, type QueryKey } from '@tanstack/react-query';
 import NetInfo from '@react-native-community/netinfo';
 import { ofertasService, type Oferta } from '../services/ofertasService';
 import { ApiError } from '../services/api';
@@ -22,6 +22,9 @@ type UseOfertasResult = {
   isFromCache: boolean;
   cacheAgeMinutos: number | null;
   errorMessage: string;
+  fetchNextPage: () => void;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
 };
 
 type OfertasQueryData = {
@@ -31,58 +34,80 @@ type OfertasQueryData = {
   cacheAgeMinutos: number | null;
 };
 
+type InfinitePages = { pages: OfertasQueryData[] };
+
+const LIMITE = 20;
 const ERROR_SIN_CONEXION =
   'No hay conexión y todavía no hay ofertas guardadas. Conéctate a internet y vuelve a intentar.';
 const ERROR_CARGA =
   'No pudimos cargar las ofertas desde el servidor. Inténtalo nuevamente en unos minutos.';
 
 export function useOfertas(params?: UseOfertasParams): UseOfertasResult {
-  const query = useQuery<OfertasQueryData>({
-    queryKey: ['ofertas', 'offline-v2', params],
-    queryFn: async () => {
+  const query = useInfiniteQuery({
+    queryKey: ['ofertas', 'infinite', params] as QueryKey,
+    queryFn: async ({ pageParam = 1 }: { pageParam: number }) => {
       const netState = await NetInfo.fetch();
 
       if (netState.isConnected && netState.isInternetReachable !== false) {
         try {
-          const result = await ofertasService.listar(
-            params as Record<string, string | number | undefined>,
-          );
+          const result = await ofertasService.listar({
+            ...(params as Record<string, string | number | undefined>),
+            pagina: pageParam,
+            limite: LIMITE,
+          });
           await ofertasRepository.guardarOfertas(result.data);
           return {
             ofertas: result.data,
-            meta: (result.meta as { pagina: number; limite: number; total: number; total_paginas: number }) ?? { pagina: 1, limite: 20, total: 0, total_paginas: 0 },
+            meta: (result.meta as { pagina: number; limite: number; total: number; total_paginas: number }) ?? { pagina: pageParam, limite: LIMITE, total: 0, total_paginas: 0 },
             isFromCache: false,
             cacheAgeMinutos: null,
           };
         } catch (error) {
-          const cache = await obtenerCache();
-          if (cache) return cache;
+          if (pageParam === 1) {
+            const cache = await obtenerCache();
+            if (cache) return cache;
+          }
           throw error;
         }
       }
 
-      const cache = await obtenerCache();
-      if (cache) return cache;
+      if (pageParam === 1) {
+        const cache = await obtenerCache();
+        if (cache) return cache;
+      }
       throw new Error(ERROR_SIN_CONEXION);
     },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      const qd = lastPage as unknown as OfertasQueryData;
+      const totalPaginas = qd.meta?.total_paginas ?? 0;
+      const nextPage = (lastPageParam as number) + 1;
+      return nextPage <= totalPaginas ? nextPage : undefined;
+    },
     retry: false,
-    staleTime: 1000 * 60 * 2,
   });
 
+  const result = (query.data as unknown as InfinitePages | undefined)?.pages;
+  const allData = result ? result.flatMap((page) => page.ofertas) : undefined;
+  const lastPage = result ? result[result.length - 1] : undefined;
+
   return {
-    data: query.data?.ofertas,
-    meta: query.data?.meta,
+    data: allData,
+    meta: lastPage?.meta,
     isLoading: query.isLoading,
     isError: query.isError,
     refetch: () => query.refetch(),
-    isFromCache: query.data?.isFromCache ?? false,
-    cacheAgeMinutos: query.data?.cacheAgeMinutos ?? null,
+    isFromCache: result?.[0]?.isFromCache ?? false,
+    cacheAgeMinutos: result?.[0]?.cacheAgeMinutos ?? null,
     errorMessage:
       query.error instanceof Error && query.error.message === ERROR_SIN_CONEXION
         ? ERROR_SIN_CONEXION
         : query.error instanceof ApiError
           ? query.error.message
           : ERROR_CARGA,
+    fetchNextPage: () => void query.fetchNextPage(),
+    hasNextPage: query.hasNextPage ?? false,
+    isFetchingNextPage: query.isFetchingNextPage,
   };
 }
 
@@ -123,8 +148,8 @@ function mapaCacheAOferta(c: OfertaCacheada): Oferta {
     descripcion: c.descripcion,
     precioOriginal: c.precio_original,
     precioOferta: c.precio_oferta,
-    sucursal: { id: c.sucursal_id },
     cantidadDisponible: c.cantidad_disponible,
+    sucursal: { id: c.sucursal_id },
     unidad: c.unidad,
     estado: c.estado_oferta,
     fechaVencimiento: c.fecha_vencimiento,

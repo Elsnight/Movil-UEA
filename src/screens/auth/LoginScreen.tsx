@@ -106,7 +106,7 @@ export function LoginScreen({ navigation }: Props) {
               flexDirection: 'row',
               alignItems: 'center',
               gap: spacing.sm,
-              backgroundColor: '#FFEBEE',
+              backgroundColor: color.dangerLight,
               padding: spacing.md,
               borderRadius: radius.input,
               marginBottom: spacing.md,
