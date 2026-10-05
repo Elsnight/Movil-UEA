@@ -1,5 +1,7 @@
 import { api, unwrapApiResponse, type ApiResult } from './api';
 
+type Envelope<T> = { success: boolean; data: T; meta?: Record<string, unknown> };
+
 export type OfertaResumida = {
   id: string;
   titulo: string;
@@ -29,8 +31,6 @@ export type Reserva = {
   createdAt: string;
 };
 
-type Envelope<T> = { success: boolean; data: T; meta?: Record<string, unknown> };
-
 export type CrearReservaInput = {
   sucursal_id: string;
   items: { oferta_id: string; cantidad: number }[];
@@ -44,6 +44,11 @@ export const reservasService = {
 
   crear: async (data: CrearReservaInput): Promise<ApiResult<Reserva>> => {
     const res = await api.post<Envelope<Reserva>>('/api/reservas', data);
+    return unwrapApiResponse(res.data);
+  },
+
+  cancelar: async (id: string): Promise<ApiResult<Reserva>> => {
+    const res = await api.patch<Envelope<Reserva>>(`/api/reservas/${id}/cancelar`);
     return unwrapApiResponse(res.data);
   },
 };
