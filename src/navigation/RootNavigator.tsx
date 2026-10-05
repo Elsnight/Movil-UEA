@@ -9,7 +9,7 @@ import type { RootStackParamList } from './types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
-  const { usuario } = useAuthStore.getState();
+  const { usuario } = useAuthStore();
 
   if (!usuario) {
     return (

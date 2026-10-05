@@ -3,20 +3,20 @@ import { reservasService, type CrearReservaInput } from '../services/reservasSer
 import { useAuthStore } from '../store/authStore';
 
 export function useReservas() {
-  const usuario = useAuthStore((s) => s.usuario);
+  const usuarioId = useAuthStore.getState().usuario?.id;
   return useQuery({
-    queryKey: ['reservas', usuario?.id],
+    queryKey: ['reservas', usuarioId],
     queryFn: () => reservasService.listar().then((r) => r.data),
   });
 }
 
 export function useCrearReserva() {
   const queryClient = useQueryClient();
-  const usuario = useAuthStore((s) => s.usuario);
+  const usuarioId = useAuthStore.getState().usuario?.id;
   return useMutation({
     mutationFn: (data: CrearReservaInput) => reservasService.crear(data).then((r) => r.data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reservas', usuario?.id] });
+      queryClient.invalidateQueries({ queryKey: ['reservas', usuarioId] });
     },
   });
 }

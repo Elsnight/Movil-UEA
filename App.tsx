@@ -16,18 +16,22 @@ function AppContent() {
 
   useEffect(() => {
     let active = true;
-    void (async () => {
-      try {
-        await iniciarBD();
-        await useAuthStore.getState().cargarSesion();
-      } catch (e) {
+
+    iniciarBD().catch(() => {});
+
+    useAuthStore.getState().cargarSesion()
+      .then(() => {
+        if (active && useAuthStore.getState().usuario) {
+          iniciarSyncAutomatico();
+        }
+      })
+      .catch((e: unknown) => {
         if (active) setInitError(e instanceof Error ? e.message : String(e));
-      }
-      if (active && useAuthStore.getState().usuario) {
-        iniciarSyncAutomatico();
-      }
-      if (active) setReady(true);
-    })();
+      })
+      .finally(() => {
+        if (active) setReady(true);
+      });
+
     return () => { active = false; };
   }, []);
 

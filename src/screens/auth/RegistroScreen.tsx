@@ -50,7 +50,7 @@ const ROL_CONFIG = {
 
 export function RegistroScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const setSesion = useAuthStore((s) => s.setSesion);
+  const setSesion = useAuthStore.getState().setSesion;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 

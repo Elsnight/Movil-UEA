@@ -13,7 +13,7 @@ export function useFavoritos() {
   const fallidos = useFavoritosStore((s) => s.fallidos);
   const esFavorito = useFavoritosStore((s) => s.esFavorito);
   const toggle = useFavoritosStore((s) => s.toggle);
-  const usuario = useAuthStore((s) => s.usuario);
+  const usuario = useAuthStore.getState().usuario;
   const favoritosQuery = useQuery({
     queryKey: ['favoritos', usuario?.id],
     enabled: usuario?.rol === 'CONSUMIDOR',
