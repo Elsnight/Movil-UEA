@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,18 +15,22 @@ export function ComerciosPendientesScreen() {
   const [comercios, setComercios] = useState<ComercioPendiente[]>([]);
   const [operando, setOperando] = useState<Record<string, boolean>>({});
 
-  async function cargar() {
-    setLoading(true);
-    setError('');
-    try {
-      const result = await adminService.listarPendientes();
-      setComercios(result.data);
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'No se pudieron cargar los comercios pendientes.');
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    let activo = true;
+    void (async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const result = await adminService.listarPendientes();
+        if (activo) setComercios(result.data);
+      } catch (e) {
+        if (activo) setError(e instanceof ApiError ? e.message : 'No se pudieron cargar los comercios pendientes.');
+      } finally {
+        if (activo) setLoading(false);
+      }
+    })();
+    return () => { activo = false; };
+  }, []);
 
   async function cambiarEstado(comercioId: string, estado: 'ACTIVO' | 'SUSPENDIDO') {
     setOperando((prev) => ({ ...prev, [comercioId]: true }));
@@ -35,14 +39,13 @@ export function ComerciosPendientesScreen() {
       setComercios((prev) => prev.filter((c) => c.comercio_id !== comercioId));
     } catch (e) {
       const msg = e instanceof ApiError ? e.message : 'No se pudo cambiar el estado.';
-      console.warn(msg);
+      console.warn?.(msg);
     } finally {
       setOperando((prev) => ({ ...prev, [comercioId]: false }));
     }
   }
 
   if (loading) {
-    void cargar();
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: color.background }}>
         <ActivityIndicator size="large" color={color.primary} />
@@ -78,7 +81,18 @@ export function ComerciosPendientesScreen() {
         {error ? (
           <View style={{ padding: spacing.md, gap: spacing.sm, alignItems: 'center' }}>
             <Text style={[typography.body, { color: color.danger }]}>{error}</Text>
-            <Button label="Reintentar" onPress={() => void cargar()} variant="secondary" />
+            <Button label="Reintentar" onPress={() => void (async () => {
+              setLoading(true);
+              setError('');
+              try {
+                const result = await adminService.listarPendientes();
+                setComercios(result.data);
+              } catch (e) {
+                setError(e instanceof ApiError ? e.message : 'No se pudieron cargar los comercios pendientes.');
+              } finally {
+                setLoading(false);
+              }
+            })()} variant="secondary" />
           </View>
         ) : comercios.length === 0 ? (
           <View style={{ padding: spacing.xl, alignItems: 'center' }}>
