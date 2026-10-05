@@ -35,6 +35,13 @@ export const ofertasService = {
     const res = await api.get<Envelope<Oferta>>(`/api/ofertas/${id}`);
     return unwrapApiResponse(res.data);
   },
+  mias: async (params?: Record<string, string | number | undefined>): Promise<OfertaListaResultado> => {
+    const res = await api.get<Envelope<Oferta[]>>('/api/ofertas/mias', { params });
+    return unwrapApiResponse(res.data);
+  },
+  cambiarEstado: async (id: string, estado: 'DISPONIBLE' | 'PAUSADA' | 'AGOTADA' | 'EXPIRADA'): Promise<void> => {
+    await api.patch(`/api/ofertas/${id}/estado`, { estado_oferta: estado });
+  },
   crear: async (data: {
     producto_id: string;
     sucursal_id: string;
