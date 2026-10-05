@@ -35,4 +35,19 @@ export const ofertasService = {
     const res = await api.get<Envelope<Oferta>>(`/api/ofertas/${id}`);
     return unwrapApiResponse(res.data);
   },
+  crear: async (data: {
+    producto_id: string;
+    sucursal_id: string;
+    titulo_publico: string;
+    precio_original: number;
+    precio_oferta: number;
+    stock_inicial: number;
+    stock_disponible: number;
+    fecha_vencimiento: string;
+    inicio_retiro: string;
+    fin_retiro: string;
+  }): Promise<ApiResult<{ oferta_id: string }>> => {
+    const res = await api.post<Envelope<{ oferta_id: string }>>('/api/ofertas', data);
+    return unwrapApiResponse(res.data);
+  },
 };
