@@ -11,11 +11,13 @@ export type ConsumidorTabParamList = {
 export type ComercianteTabParamList = {
   MisOfertas: undefined;
   Publicar: undefined;
+  Gestionar: undefined;
   ValidarRetiro: undefined;
 };
 
 export type AdminTabParamList = {
   Pendientes: undefined;
+  Gestionar: undefined;
 };
 
 export type ConsumidorStackParamList = {
